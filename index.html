@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Transient Analysis of a Series RLC Circuit in a Power Supply Unit</title>
+<meta name="description" content="Applied Mathematics capstone: interactive transient analysis of a series RLC circuit with a DC step input.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a class="brand" href="#home" aria-label="Home">
+      <svg viewBox="0 0 32 32" fill="none" stroke="#27d3ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="1" width="30" height="30" rx="8" stroke="#2f8bff"/><path d="M5 17h5l2-5 3 10 3-8 2 3h7"/></svg>
+      RLC Transient Lab
+    </a>
+    <button class="burger" id="burger" aria-label="Toggle menu" aria-expanded="false">☰</button>
+    <div class="links" id="links">
+      <a href="#home">Home</a><a href="#simulator">Circuit Simulator</a><a href="#analysis">Mathematical Analysis</a>
+      <a href="#graphs">Transient Graphs</a><a href="#compare">Response Comparison</a><a href="#conclusion">Applications &amp; Conclusion</a>
+    </div>
+  </div>
+</nav>
+
+<main>
+<!-- 1 HOME -->
+<section id="home" class="hero">
+  <div class="wrap">
+    <div class="reveal">
+      <span class="pill">Applied Mathematics Capstone Project</span>
+      <h1>Transient Analysis of a Series RLC Circuit in a Power Supply Unit</h1>
+      <p class="lead">When a power supply is switched on, its inductor and capacitor do not settle instantly. A second-order differential equation predicts the surge current and the voltage overshoot. This site solves that equation exactly and lets you explore it.</p>
+      <div class="cta">
+        <a class="btn" href="#simulator" id="startBtn">Start Simulation</a>
+        <a class="btn steel" href="#analysis">View the Mathematics</a>
+      </div>
+    </div>
+    <div class="glass hero-viz reveal">
+      <div class="chart-box" style="height:230px"><canvas id="heroChart" aria-label="Sample underdamped capacitor voltage response"></canvas></div>
+      <small>Live preview: v<sub>C</sub>(t) of a 12 V step, R = 5 Ω, L = 10 mH, C = 100 µF</small>
+    </div>
+  </div>
+  <div class="wrap" style="display:block;margin-top:44px">
+    <div class="grid g2">
+      <div class="glass card">
+        <div class="icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+        <h3>Project overview</h3>
+        <p>A power supply unit (PSU) connects its output filter to a DC source through a switch. The resistance, inductance and capacitance in that path form a series RLC circuit. This project models the first few milliseconds after switch-on, with the circuit starting at rest, and classifies the behavior as underdamped, critically damped or overdamped.</p>
+      </div>
+      <div class="glass card">
+        <div class="icon"><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg></div>
+        <h3>Objectives</h3>
+        <ul class="obj-list">
+          <li>Derive and solve L·i″ + R·i′ + i/C = 0 for a DC step with i(0) = 0 and v<sub>C</sub>(0) = 0.</li>
+          <li>Compute ω<sub>n</sub>, α, ζ and R<sub>critical</sub> from user-defined component values.</li>
+          <li>Plot exact current and capacitor-voltage responses, with peaks and settling time.</li>
+          <li>Compare the three damping regimes and relate them to real PSU design.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 2 SIMULATOR -->
+<section id="simulator">
+  <div class="wrap">
+    <div class="sec-head"><h2>Circuit Simulator</h2><p>Enter component values or pick a preset. Results update as you type; Simulate redraws every graph from the current values.</p></div>
+    <div class="sim">
+      <div class="glass panel">
+        <h3>Circuit parameters</h3>
+        <div class="presets" id="presets"></div>
+        <form id="form" novalidate autocomplete="off">
+          <div class="field" data-f="R"><label for="R">Resistance R <b>Ω</b></label><input id="R" inputmode="decimal" value="5"><div class="msg"></div></div>
+          <div class="field" data-f="L"><label for="L">Inductance L <b>H</b></label><input id="L" inputmode="decimal" value="0.01"><div class="msg"></div></div>
+          <div class="field" data-f="C"><label for="C">Capacitance C <b>µF</b></label><input id="C" inputmode="decimal" value="100"><div class="msg"></div></div>
+          <div class="field" data-f="V"><label for="V">DC input voltage V <b>V</b></label><input id="V" inputmode="decimal" value="12"><div class="msg"></div></div>
+          <div class="btnrow">
+            <button type="submit" class="btn" id="simBtn">Simulate</button>
+            <button type="button" class="btn steel" id="cmpBtn">Compare</button>
+            <button type="button" class="btn ghost" id="resetBtn">Reset</button>
+          </div>
+        </form>
+        <div class="alert" id="alert" role="alert"></div>
+      </div>
+      <div>
+        <div class="glass diagram">
+          <svg viewBox="0 0 760 290" role="img" aria-label="Series RLC circuit diagram">
+            <defs><linearGradient id="wg" x1="0" x2="1"><stop offset="0" stop-color="#2f8bff"/><stop offset="1" stop-color="#27d3ff"/></linearGradient></defs>
+            <g fill="none" stroke="#5d7fb8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M90 60H170M230 60H260M340 60H400M480 60H670V125M670 145V240H90V150M90 135V60"/>
+              <path d="M170 60l56-24" stroke="#8fa3c7"/>
+              <rect x="260" y="42" width="80" height="36" rx="5" stroke="#ffb84a"/>
+              <path d="M400 60q10-30 20 0q10-30 20 0q10-30 20 0q10-30 20 0" stroke="#27d3ff"/>
+              <path d="M72 135h36M645 125h50M645 145h50" stroke="#e6eefc"/>
+              <path d="M80 150h20" stroke="#e6eefc" stroke-width="7"/>
+            </g>
+            <path id="flowPath" class="flow" d="M90 140V60H670V125M670 150V240H90V150" fill="none" stroke="url(#wg)" stroke-width="3" opacity=".9"/>
+            <g fill="#8fa3c7" stroke="none"><circle cx="170" cy="60" r="4"/><circle cx="230" cy="60" r="4"/></g>
+            <g font-family="IBM Plex Mono,monospace" font-size="15" fill="#e6eefc" text-anchor="middle">
+              <text x="300" y="30" fill="#ffb84a" id="lblR">R</text><text x="440" y="30" fill="#27d3ff" id="lblL">L</text>
+              <text x="735" y="140" id="lblC" text-anchor="end" fill="#e6eefc">C</text>
+              <text x="40" y="150" id="lblV">V</text><text x="200" y="32" fill="#8fa3c7" font-size="12">switch closes at t = 0</text>
+              <text x="380" y="272" fill="#8fa3c7" font-size="13">i(t) flows clockwise through R, L and C</text>
+            </g>
+          </svg>
+        </div>
+        <div class="results" id="results"></div>
+        <div class="glass meaning" id="meaning"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 3 ANALYSIS -->
+<section id="analysis">
+  <div class="wrap">
+    <div class="sec-head"><h2>Mathematical Analysis</h2><p>The general theory, then a worked calculation using the values currently entered in the simulator.</p></div>
+    <div class="math-grid">
+      <div class="glass card">
+        <h3>1. Governing equation</h3>
+        <p>Kirchhoff's voltage law around the loop, after the switch closes at t = 0 with a constant source V:</p>
+        <div class="formula">V = R·i + L·di/dt + v<sub>C</sub>,&nbsp; i = C·dv<sub>C</sub>/dt</div>
+        <p>Differentiating once removes the constant source and leaves the homogeneous equation for t &gt; 0:</p>
+        <div class="formula">L·d²i/dt² + R·di/dt + i/C = 0</div>
+        <p>Initial conditions for an unenergized circuit. The inductor current cannot jump, and at t = 0⁺ the capacitor is still at 0 V, so the full source voltage sits across L:</p>
+        <div class="formula">i(0) = 0 &nbsp;&nbsp; di/dt(0⁺) = V/L &nbsp;&nbsp; v<sub>C</sub>(0) = 0</div>
+      </div>
+      <div class="glass card">
+        <h3>2. Characteristic equation and parameters</h3>
+        <div class="formula">s² + 2α·s + ω<sub>n</sub>² = 0 &nbsp;→&nbsp; s = −α ± √(α² − ω<sub>n</sub>²)</div>
+        <div class="formula">ω<sub>n</sub> = 1/√(LC) &nbsp;&nbsp; α = R/(2L) &nbsp;&nbsp; ζ = α/ω<sub>n</sub> = (R/2)·√(C/L)</div>
+        <div class="formula">R<sub>critical</sub> = 2·√(L/C) &nbsp;&nbsp; (ζ = 1 when R = R<sub>critical</sub>)</div>
+        <p>ζ &lt; 1 gives complex roots (oscillation), ζ = 1 a double real root, and ζ &gt; 1 two distinct real roots. R = 0 is the lossless limit (ζ = 0).</p>
+      </div>
+      <div class="glass card">
+        <h3>3. Step-response solutions</h3>
+        <p><b style="color:var(--under)">Underdamped</b> (ω<sub>d</sub> = √(ω<sub>n</sub>² − α²)):</p>
+        <div class="formula">i(t) = (V/(L·ω<sub>d</sub>))·e<sup>−αt</sup>·sin(ω<sub>d</sub>t)</div>
+        <div class="formula">v<sub>C</sub>(t) = V·[1 − e<sup>−αt</sup>(cos ω<sub>d</sub>t + (α/ω<sub>d</sub>)·sin ω<sub>d</sub>t)]</div>
+        <p><b style="color:var(--crit)">Critically damped</b>:</p>
+        <div class="formula">i(t) = (V/L)·t·e<sup>−αt</sup></div>
+        <div class="formula">v<sub>C</sub>(t) = V·[1 − (1 + αt)·e<sup>−αt</sup>]</div>
+        <p><b style="color:var(--over)">Overdamped</b> (β = √(α² − ω<sub>n</sub>²), s₁ = −α + β, s₂ = −α − β):</p>
+        <div class="formula">i(t) = (V/(2βL))·(e<sup>s₁t</sup> − e<sup>s₂t</sup>)</div>
+        <div class="formula">v<sub>C</sub>(t) = V·[1 + (s₂e<sup>s₁t</sup> − s₁e<sup>s₂t</sup>)/(s₁ − s₂)]</div>
+      </div>
+      <div class="glass card">
+        <h3>4. Peaks and settling</h3>
+        <div class="formula">Under: t<sub>pk,i</sub> = atan(ω<sub>d</sub>/α)/ω<sub>d</sub>, &nbsp; t<sub>pk,v</sub> = π/ω<sub>d</sub></div>
+        <div class="formula">v<sub>C,max</sub> = V·(1 + e<sup>−απ/ω<sub>d</sub></sup>)</div>
+        <div class="formula">Critical: t<sub>pk,i</sub> = 1/α, &nbsp; i<sub>max</sub> = 2V/(e·R)</div>
+        <div class="formula">Over: t<sub>pk,i</sub> = ln((α+β)/ω<sub>n</sub>)/β</div>
+        <p>Critically damped and overdamped capacitor voltages rise monotonically to V with no overshoot, so their peak equals the final value. Settling time is the last instant v<sub>C</sub> leaves a ±2 % band around V, found numerically from the exact solution. For underdamped circuits, 4/α is a quick envelope estimate.</p>
+      </div>
+    </div>
+    <div class="glass card" style="margin-top:18px">
+      <h3>Worked calculation with your current inputs</h3>
+      <ol class="steps" id="steps"></ol>
+    </div>
+  </div>
+</section>
+
+<!-- 4 GRAPHS -->
+<section id="graphs">
+  <div class="wrap">
+    <div class="sec-head"><h2>Transient Graphs</h2><p>Exact solutions sampled directly from the formulas above. Hover for values, drag the slider to read both signals at the same instant.</p></div>
+    <div class="grid g2">
+      <div class="glass chart-card"><h3>Current i(t)<span class="legend" id="legI"></span></h3><div class="chart-box"><canvas id="chartI"></canvas></div></div>
+      <div class="glass chart-card"><h3>Capacitor voltage v<sub>C</sub>(t)<span class="legend" id="legV"></span></h3><div class="chart-box"><canvas id="chartV"></canvas></div></div>
+    </div>
+    <div class="glass cursor">
+      <input type="range" id="slider" min="0" max="1000" value="0" aria-label="Time cursor">
+      <div class="read" id="cursorRead"></div>
+    </div>
+  </div>
+</section>
+
+<!-- 5 COMPARE -->
+<section id="compare">
+  <div class="wrap">
+    <div class="sec-head"><h2>Response Comparison</h2><p>Using your L, C and V, the resistance is changed to give ζ = 0.2 (underdamped), ζ = 1 (critical) and ζ = 2.5 (overdamped). Each curve is a separate simulation. Your own R is shown dashed.</p></div>
+    <div class="btnrow" style="margin:0 0 16px"><button class="btn" id="cmpRun">Run comparison</button></div>
+    <div class="grid g2">
+      <div class="glass chart-card"><h3>Current comparison</h3><div class="chart-box"><canvas id="cmpI"></canvas></div></div>
+      <div class="glass chart-card"><h3>Capacitor voltage comparison</h3><div class="chart-box"><canvas id="cmpV"></canvas></div></div>
+    </div>
+    <div class="glass tbl"><table id="cmpTable"></table></div>
+    <div class="grid g3" style="margin-top:18px">
+      <div class="glass card"><h3 style="color:var(--under)">Underdamped</h3><p>Fastest first rise, but v<sub>C</sub> overshoots V and rings. Low resistance means little energy is lost per cycle.</p></div>
+      <div class="glass card"><h3 style="color:var(--crit)">Critically damped</h3><p>The quickest approach to V with no overshoot. It is the design boundary between ringing and sluggishness.</p></div>
+      <div class="glass card"><h3 style="color:var(--over)">Overdamped</h3><p>No overshoot, but the slow real root makes it creep toward V. Extra resistance also dissipates more power.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 6 CONCLUSION -->
+<section id="conclusion">
+  <div class="wrap">
+    <div class="sec-head"><h2>Applications &amp; Conclusion</h2><p>Why a second-order ODE matters for real power electronics.</p></div>
+    <div class="grid g4">
+      <div class="glass card"><div class="icon"><svg viewBox="0 0 24 24"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg></div><h3>Switch-on surge</h3><p>The peak current found here sizes fuses, switches and rectifier diodes.</p></div>
+      <div class="glass card"><div class="icon"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 15l3-4 3 3 4-6"/></svg></div><h3>Overshoot protection</h3><p>A voltage peak above V can exceed the rating of downstream capacitors and ICs.</p></div>
+      <div class="glass card"><div class="icon"><svg viewBox="0 0 24 24"><path d="M3 12h4l2-6 4 12 2-6h6"/></svg></div><h3>Filter design</h3><p>LC output filters in buck converters and EMI filters are tuned using ζ and ω<sub>n</sub>.</p></div>
+      <div class="glass card"><div class="icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5h4"/></svg></div><h3>Start-up time</h3><p>Settling time sets how soon a regulated rail is ready for its load.</p></div>
+    </div>
+    <div class="glass card conc" style="margin-top:18px">
+      <h3>Conclusion</h3>
+      <ul>
+        <li>The step response of a series RLC circuit is fully set by ζ = (R/2)·√(C/L), compared with 1 (R versus R<sub>critical</sub> = 2√(L/C)).</li>
+        <li>Low damping gives fast response with overshoot up to 2V in the lossless limit. High damping removes overshoot at the price of speed.</li>
+        <li>Critical damping is the fastest non-overshooting response, which is why designers aim near ζ ≈ 0.7–1 in practice.</li>
+        <li>Every graph here uses the closed-form solutions with i(0) = 0 and v<sub>C</sub>(0) = 0, so values can be checked by hand.</li>
+        <li>Limits: ideal components, a constant source, and no parasitics such as ESR or switch resistance, which a full PSU model would add.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+</main>
+<footer><div class="wrap">Applied Mathematics Capstone Project · Transient Analysis of a Series RLC Circuit in a Power Supply Unit</div></footer>
+
+<script src="chart.umd.min.js"></script>
+<script>window.Chart||document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.7/chart.umd.min.js"><\/script>')</script>
+<script src="script.js"></script>
+</body>
+</html>
